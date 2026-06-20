@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16
+    container_name: swifthaul_db
+    environment:
+      POSTGRES_USER: swifthaul
+      POSTGRES_PASSWORD: swifthaul_pass
+      POSTGRES_DB: swifthaul
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init_database.sql:/docker-entrypoint-initdb.d/init_database.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swifthaul -d swifthaul"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: swifthaul_api
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
